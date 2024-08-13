@@ -1,0 +1,40 @@
+choose_data <- function(MatrNr, Jahre = 4, ncomp = 2) {
+
+  data <- read.table("W2453 - Aktienkurse - nicht bearbeiten.txt", header = TRUE)
+  companies <- names(data)[-(1:3)]
+  set.seed(MatrNr)
+  ausw <- (2018 - 2004) * 12 + 8 - Jahre * 12 + 1
+  Month <- sample(0:(ausw - 1), size = 1)
+  year1 <- trunc(Month / 12 + 2005)
+  month1 <- (Month + 1) %% 12
+  if (month1 == 1) {
+    year2 <- year1 + Jahre - 1
+    month2 <- 12
+  } else {
+    year2 <- year1 + Jahre
+    month2 <- month1 - 1
+  }
+  data2 <- data[(data$Year > year1 & data$Year < year2) | 
+    (data$Year == year1 & data$Month >= month1) | (data$Year == year2 & 
+     data$Month <= month2), ]
+
+  comps <- sample(4:13, size = ncomp)
+
+  sublist <- vector(mode = "list", length = ncomp)
+  for (i in 1:ncomp) {
+   sublist[[i]] <- assign(paste0("comp", i), value = data.frame(Year = data2$Year, 
+      Month = data2$Month, Day = data2$Day, 
+      Close = data2[, comps[i]])[!is.na(data2[, comps[i]]), ])
+      n <- length(sublist[[i]]$Close)
+      rownames(sublist[[i]]) <- 1:n
+  }
+
+  months <- c("Januar", "Februar", "Maerz", "April", "Mai", "Juni", "Juli", 
+    "August", "September", "Oktober", "November", "Dezember")
+  names(sublist) <- companies[comps - 3]
+  n2 <- length(names(sublist))
+  cat(paste0(head(names(sublist), -1), collapse = ", "), " und ", names(sublist[n2]), " wurden gewaehlt. Zeitraum: ",
+  months[month1], " ", year1, " bis ", months[month2], " ", year2, ".", 
+  fill = TRUE, sep = "")
+  sublist
+}
